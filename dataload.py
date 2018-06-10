@@ -4,7 +4,11 @@ import pandas as pd
 
 # read the CSV without header
 # (discard row 0 if it contains the header)
-df = pd.read_csv('kddcup.data.txt', nrows=5, header=None)
+# fix the malformed row 4817100 by removing columns 0:14
+df = pd.concat(
+    (pd.read_csv('kddcup.data.txt', error_bad_lines=False, header=None, engine='c', memory_map=True),
+    pd.read_csv('kddcup.data.txt', header=None, skiprows=4817100-1, nrows=1, engine='c', memory_map=True).iloc[:, 14:]),
+    ignore_index=True, copy=False)
 if df.iloc[0, 0] == 'duration':
     df = df[1:]
 
@@ -28,3 +32,5 @@ attack_types = pd.DataFrame({ 'attack_type' : attack_types[:,1] },
 df['attack_type'] = attack_types.loc[df.attack].attack_type.values
 
 # the dataset is now ready, in DataFrame 'df'
+
+# you should first split it into train/test, before doing any other processing
