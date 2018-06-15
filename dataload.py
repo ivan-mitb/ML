@@ -31,6 +31,11 @@ attack_types = pd.DataFrame({ 'attack_type' : attack_types[:,1] },
     index=attack_types[:,0])
 df['attack_type'] = attack_types.loc[df.attack].attack_type.values
 
-# the dataset is now ready, in DataFrame 'df'
-
+# the dataset is now ready, in DataFrame 'df'.
 # you should first split it into train/test, before doing any other processing
+
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.1, random_state=4129)
+
+# the dataset is now ready, in DataFrames x_train and x_test
