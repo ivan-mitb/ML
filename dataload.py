@@ -1,16 +1,19 @@
 # 2018-6-9 ivan: initial commit
 
+import numpy as np
 import pandas as pd
 
 # read the CSV without header
 # (discard row 0 if it contains the header)
 # fix the malformed row 4817100 by removing columns 0:14
-df = pd.concat(
-    (pd.read_csv('kddcup.data.txt', error_bad_lines=False, header=None, engine='c', memory_map=True),
-    pd.read_csv('kddcup.data.txt', header=None, skiprows=4817100-1, nrows=1, engine='c', memory_map=True).iloc[:, 14:]),
-    ignore_index=True, copy=False)
+df = pd.read_csv('kddcup.data.txt', error_bad_lines=False, header=None, engine='c', memory_map=True)
+df1 = pd.read_csv('kddcup.data.txt', header=None, skiprows=4817100-1, nrows=1, engine='c', memory_map=True).iloc[:, 14:]
+df1.columns = df.columns
+df = df.append(df1)
 if df.iloc[0, 0] == 'duration':
     df = df[1:]
+del(df1)
+df.reset_index(drop=True, inplace=True)
 
 # read in the headers (exclude first row)
 header = open('kddcup.names').readlines()[1:]
@@ -31,8 +34,8 @@ attack_types = pd.DataFrame({ 'attack_type' : attack_types[:,1] },
     index=attack_types[:,0])
 df['attack_type'] = attack_types.loc[df.attack].attack_type.values
 
-# the dataset is now ready, in DataFrame 'df'.
-# you should first split it into train/test, before doing any other processing
+# the processed dataset is now in DataFrame 'df'.
+# we first split it into train/test, before doing any analysis
 
 from sklearn.model_selection import train_test_split
 
