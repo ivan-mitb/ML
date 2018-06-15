@@ -1,12 +1,19 @@
 # 2018-6-9 ivan: initial commit
 
+import numpy as np
 import pandas as pd
 
 # read the CSV without header
 # (discard row 0 if it contains the header)
-df = pd.read_csv('kddcup.data.txt', nrows=5, header=None)
+# fix the malformed row 4817100 by removing columns 0:14
+df = pd.read_csv('kddcup.data.txt', error_bad_lines=False, header=None, engine='c', memory_map=True)
+df1 = pd.read_csv('kddcup.data.txt', header=None, skiprows=4817100-1, nrows=1, engine='c', memory_map=True).iloc[:, 14:]
+df1.columns = df.columns
+df = df.append(df1)
 if df.iloc[0, 0] == 'duration':
     df = df[1:]
+del(df1)
+df.reset_index(drop=True, inplace=True)
 
 # read in the headers (exclude first row)
 header = open('kddcup.names').readlines()[1:]
@@ -27,4 +34,11 @@ attack_types = pd.DataFrame({ 'attack_type' : attack_types[:,1] },
     index=attack_types[:,0])
 df['attack_type'] = attack_types.loc[df.attack].attack_type.values
 
-# the dataset is now ready, in DataFrame 'df'
+# the processed dataset is now in DataFrame 'df'.
+# we first split it into train/test, before doing any analysis
+
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.1, random_state=4129)
+
+# the dataset is now ready, in DataFrames x_train and x_test
