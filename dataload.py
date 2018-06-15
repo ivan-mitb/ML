@@ -3,6 +3,18 @@
 import numpy as np
 import pandas as pd
 
+import pickle
+
+def save_object(obj, filename):
+    with open(filename, 'wb') as output:
+        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+
+def load_object(filename):
+    obj = {}
+    with open(filename, 'rb') as input:
+        obj = pickle.load(input)
+    return obj
+
 # read the CSV without header
 # (discard row 0 if it contains the header)
 # fix the malformed row 4817100 by removing columns 0:14
@@ -39,6 +51,9 @@ df['attack_type'] = attack_types.loc[df.attack].attack_type.values
 
 from sklearn.model_selection import train_test_split
 
-x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-1], df.iloc[:, -1], test_size=0.1, random_state=4129)
+x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-2], df.iloc[:, -2:], test_size=0.1, random_state=4129)
 
 # the dataset is now ready, in DataFrames x_train and x_test
+
+save_object([x_train, y_train], 'train.dat')
+save_object([x_test, y_test], 'test.dat')
