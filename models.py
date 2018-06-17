@@ -14,7 +14,7 @@ from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 #   L O G I S T I C
 
 # fit on balanced data
-logit = LogisticRegression(C=31, multi_class='ovr', solver='sag', n_jobs=-1)
+logit = LogisticRegression(C=21, multi_class='ovr', solver='newton-cg', n_jobs=-1)
 logit.fit(x_train_r, y_train_r)
 
 def score_test():
@@ -22,9 +22,9 @@ def score_test():
     # logit.score(x_test.iloc[:, 4:], y_test.attack)
     y_pred = logit.predict(x_test.iloc[:, 4:])
     return DataFrame({
-        'accuracy' : [accuracy_score(y_test.attack, y_pred)],
-        'recall' : [recall_score(y_test.attack, y_pred, average='micro')],
-        'F1' : [f1_score(y_test.attack, y_pred, average='micro')] })
+        'accuracy' : [accuracy_score(y_test.attack_type, y_pred)],
+        'recall' : [recall_score(y_test.attack_type, y_pred, average='micro')],
+        'F1' : [f1_score(y_test.attack_type, y_pred, average='micro')] })
 
 # fit on imbalanced data
 logit = LogisticRegression(C=31, multi_class='ovr', solver='sag', n_jobs=-1)
