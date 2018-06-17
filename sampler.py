@@ -47,11 +47,11 @@ def make_pipe(kcount=100000, levels=['smurf', 'neptune', 'normal']):
 # x_train_r, y_train_r = atktype_pipe.fit_sample(x_train.iloc[:1000, 4:], y_train.attack_type[:1000])
 
 # make a sampling pipeline on the full training set (target = attack)
-samp_pipe = make_pipe(20000, levels=['smurf', 'neptune', 'normal'])
+samp_pipe = make_pipe(20000, levels=['smurf', 'neptune', 'normal')
 x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 4:], y_train.attack)
 
 # make a sampling pipeline on the full training set (target = attack_type)
-samp_pipe = make_pipe(50000, levels=['dos', 'normal'])
+samp_pipe = make_pipe(20000, levels=['dos', 'normal', 'probe'])
 x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 4:], y_train.attack_type)
 
 # x_train_r, y_train_r now contain the training set with balanced classes.
