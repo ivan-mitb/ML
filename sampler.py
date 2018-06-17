@@ -26,10 +26,10 @@ def make_pipe(kcount=100000, levels=['smurf', 'neptune', 'normal']):
     ratio = dict(zip(levels, [kcount] * len(levels)))
     # ratio = {'smurf':kcount, 'neptune':kcount, 'normal':kcount}
 
-    # down-sample smurf, neptune, normal to 100,000
+    # down-sample majority classes to kcount
     rus = RandomUnderSampler(random_state=4129, ratio=ratio)
 
-    # up-sample the others to 100,000
+    # up-sample the others to kcount
     ros = RandomOverSampler(random_state=4129)
 
     from imblearn.pipeline import Pipeline
@@ -39,15 +39,9 @@ def make_pipe(kcount=100000, levels=['smurf', 'neptune', 'normal']):
 # Counter(y_train.attack_type[:1000])
 # Counter(y_train.attack)
 # Counter(y_train.attack_type)
-#
-# attack_pipe = make_pipe(60, levels=['smurf'])
-# x_train_r, y_train_r = attack_pipe.fit_sample(x_train.iloc[:120, 4:], y_train.attack[:120])
-#
-# atktype_pipe = make_pipe(500, ['dos'])
-# x_train_r, y_train_r = atktype_pipe.fit_sample(x_train.iloc[:1000, 4:], y_train.attack_type[:1000])
 
 # make a sampling pipeline on the full training set (target = attack)
-samp_pipe = make_pipe(20000, levels=['smurf', 'neptune', 'normal')
+samp_pipe = make_pipe(20000, levels=['smurf', 'neptune', 'normal'])
 x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 4:], y_train.attack)
 
 # make a sampling pipeline on the full training set (target = attack_type)
