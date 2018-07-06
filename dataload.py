@@ -51,6 +51,15 @@ def init_dataset(filename='kddcup.data.txt'):
     df['attack_type'] = attack_types.loc[df.attack].attack_type.values
     return df
 
+def cat2ord(cols=['protocol_type','service','flag']):
+    global x_train, x_test
+    # manually encode the 3 string cols as ordinals
+    for i in cols:
+        d = x_train[i].unique()
+        d = pd.Series(d.size, index=d)
+        x_train[i] = d[x_train[i]].reset_index(drop=True)
+        x_test[i] = d[x_test[i]].reset_index(drop=True)
+
 from sklearn.model_selection import train_test_split
 
 def make_data():
@@ -59,9 +68,12 @@ def make_data():
     # the processed dataset is now in DataFrame 'df'.
     # we first split it into train/test, before doing any analysis
 
-    x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-2], df.iloc[:, -2:], test_size=0.1, random_state=4129)
+    x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-2], df.iloc[:, -2:], test_size=0.1, stratify=df.attack_type, random_state=4129)
 
     save_object([x_train, y_train], 'train.dat')
     save_object([x_test, y_test], 'test.dat')
+
+def load_train(fn='train.dat'):
+    return load_object(fn)
 
 # the dataset is now ready, in DataFrames x_train and x_test
