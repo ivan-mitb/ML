@@ -51,14 +51,18 @@ def init_dataset(filename='kddcup.data.txt'):
     df['attack_type'] = attack_types.loc[df.attack].attack_type.values
     return df
 
-def cat2ord(cols=['protocol_type','service','flag']):
-    global x_train, x_test
+def cat2ord(x_train, x_test, cols=['protocol_type','service','flag']):
+    from sklearn.preprocessing import LabelEncoder
+    le = LabelEncoder()
+
     # manually encode the 3 string cols as ordinals
     for i in cols:
-        d = x_train[i].unique()
-        d = pd.Series(d.size, index=d)
-        x_train[i] = d[x_train[i]].reset_index(drop=True)
-        x_test[i] = d[x_test[i]].reset_index(drop=True)
+        x_train[i] = le.fit_transform(x_train[i])
+        x_test[i] = le.transform(x_test[i])
+        # d = x_train[i].unique()
+        # d = pd.Series(d.size, index=d)
+        # x_train[i] = d[x_train[i]].reset_index(drop=True)
+        # x_test[i] = d[x_test[i]].reset_index(drop=True)
 
 from sklearn.model_selection import train_test_split
 
