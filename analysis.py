@@ -6,16 +6,33 @@ x_train, y_train = load_object('train.dat')
 # x_train, y_train = load_object('train_100k.dat')
 # x_train_r, y_train_r = load_object('train_r.dat')
 x_test, y_test = load_object('test.dat')
+cats_train, cats_test = load_object('cats.dat')
+
+###########################################################
+#   skip these if you're loading from train/test.dat
+
+# load data from file, process it, then save as train/test.dat files
+# make_data()
 
 # convert categoricals to ordinal
-cat2ord(x_train, x_test)
+# cat2ord(x_train, x_test)
 
-# dummy-encode the 3 categoricals
-from sklearn.preprocessing import OneHotEncoder
+# save_object([x_train, y_train], 'train.dat')
+# save_object([x_test, y_test], 'test.dat')
 
-hot = OneHotEncoder(sparse=True)
-cats_train = hot.fit_transform(x_train.loc[:, ['flag','protocol_type','service']])
-cats_test = hot.transform(x_test.loc[:, ['flag','protocol_type','service']])
+# dummy-encode the 3 categoricals, place into cats_test/cats_test
+# from sklearn.preprocessing import OneHotEncoder
+# hot = OneHotEncoder(sparse=True)
+# cats_train = hot.fit_transform(x_train.loc[:, ['flag','protocol_type','service']])
+# cats_test = hot.transform(x_test.loc[:, ['flag','protocol_type','service']])
+# save_object([cats_train, cats_test], 'cats.dat')
+
+###########################################################
+
+# throw away the 3 categorical cols and 'num_outbound_cmds'
+cols = ['flag','protocol_type','service','num_outbound_cmds']
+x_train.drop(columns=cols, inplace=True)
+x_test.drop(columns=cols, inplace=True)
 
 # this gives us the sparse matrix cats_train, 84 cols.
 #
@@ -30,25 +47,6 @@ tSVD = TruncatedSVD(n_components=10, random_state = 4129)
 catsvd_train = tSVD.fit_transform(cats_train)
 catsvd_test = tSVD.transform(cats_test)
 
-# Decision Tree for variable importance
-def cats_importance(cats_train, target):
-    from sklearn.tree import DecisionTreeClassifier
-    dt = DecisionTreeClassifier(max_depth=10, random_state=4129)
-    dt.fit(cats_train, y_train.attack_type == target)
-    return pd.DataFrame(dt.feature_importances_, columns=['imp']).sort_values(by='imp', axis=0, ascending=False).iloc[:20]
-# [cats_importance(cats_train, i) for i in ['normal','dos','probe','r2l','u2r']]
-
-# throw away the 3 categorical cols and 'num_outbound_cmds'
-cols = ['flag','protocol_type','service','num_outbound_cmds']
-x_train.drop(columns=cols, inplace=True)
-x_test.drop(columns=cols, inplace=True)
-
-# now everything is numeric, so convert from DataFrame to np.array
-# x_train and catsvd_train
-
-x_train = x_train.values
-x_test = x_test.values
-
 #   FEATURE SCALING
 # we need to minmaxscale x_train to [0,1].
 
@@ -57,13 +55,23 @@ from sklearn.preprocessing import MinMaxScaler
 mms = MinMaxScaler(copy=False)      # do it in-place
 mms.fit_transform(x_train)
 mms.transform(x_test)
+# catsvd_train/test these don't need scaling, they are binary dummy vars
 
-# then join to the PCA'd or extracted cols from cats_train (these don't need scaling, they are binary dummy vars)
+# join catsvd_train/test as well as the 9 important raw cols of cats_train/test
+# to x_train/test
+# this also converts x_train/test into np.array format (ie we lose column names)
+# now all columns are numeric.
 
-x_train = np.hstack([x_train, cats_train])
-x_test = np.hstack([x_test, cats_test])
+# 56 cols: x_train cols 0-36, catsvd_train cols 37-46, cats_train cols 47-55
+
+cols = [2,8,9,10,13,33,34,58,74]
+x_train = np.hstack([x_train, catsvd_train, cats_train[:, cols].toarray()])
+x_test = np.hstack([x_test, catsvd_test, cats_test[:, cols].toarray()])
 
 # at this point, x_train/x_test are ready for resampling/modelling
+save_object([x_train, x_test], 'ready.dat')
+
+######################################################################
 
 # from collections import Counter
 # Counter(y_train.attack[:120])
@@ -75,16 +83,26 @@ x_test = np.hstack([x_test, cats_test])
 # resampling is done immediately prior to model-fitting
 
 # make a sampling pipeline on the full training set (target = attack)
-samp_pipe = make_pipe(19999, levels=['smurf', 'neptune', 'normal'])
-x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 3:], y_train.attack)
+# samp_pipe = make_pipe(19999, levels=['smurf', 'neptune', 'normal'])
+# x_train_r, y_train_r = samp_pipe.fit_sample(x_train, y_train.attack)
 
 # make a sampling pipeline on the full training set (target = attack_type)
 samp_pipe = make_pipe(19999, levels=['dos', 'normal', 'probe'])
-x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 3:], y_train.attack_type)
+x_train_r, y_train_r = samp_pipe.fit_sample(x_train, y_train.attack_type)
 
 # x_train_r, y_train_r now contain the training set with balanced classes.
 # use them for modelling.
 
+
+######################################################################
+# Decision Tree for variable importance (one-hot encoded categoricals)
+
+def cats_importance(cats_train, target):
+    from sklearn.tree import DecisionTreeClassifier
+    dt = DecisionTreeClassifier(max_depth=10, random_state=4129)
+    dt.fit(cats_train, y_train.attack_type == target)
+    return pd.DataFrame(dt.feature_importances_, columns=['imp']).sort_values(by='imp', axis=0, ascending=False).iloc[:20]
+# [cats_importance(cats_train, i) for i in ['normal','dos','probe','r2l','u2r']]
 
 ######################################################################
 
