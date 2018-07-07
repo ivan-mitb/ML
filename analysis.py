@@ -3,49 +3,17 @@
 %cd Documents/ML/Project
 from dataload import *
 x_train, y_train = load_object('train.dat')
-# x_train, y_train = load_object('train_100k.dat')
-# x_train_r, y_train_r = load_object('train_r.dat')
 x_test, y_test = load_object('test.dat')
-cats_train, cats_test = load_object('cats.dat')
+cats_train, cats_test, catsvd_train, catsvd_test = load_object('cats.dat')
+# x_train, x_test = load_object('ready.dat')
 
 ###########################################################
-#   skip these if you're loading from train/test.dat
+#   skip these if you're loading from .dat files
 
-# load data from file, process it, then save as train/test.dat files
+# load data from file, process it, then save as train/test/cats.dat files
 # make_data()
 
-# convert categoricals to ordinal
-# cat2ord(x_train, x_test)
-
-# save_object([x_train, y_train], 'train.dat')
-# save_object([x_test, y_test], 'test.dat')
-
-# dummy-encode the 3 categoricals, place into cats_test/cats_test
-# from sklearn.preprocessing import OneHotEncoder
-# hot = OneHotEncoder(sparse=True)
-# cats_train = hot.fit_transform(x_train.loc[:, ['flag','protocol_type','service']])
-# cats_test = hot.transform(x_test.loc[:, ['flag','protocol_type','service']])
-# save_object([cats_train, cats_test], 'cats.dat')
-
 ###########################################################
-
-# throw away the 3 categorical cols and 'num_outbound_cmds'
-cols = ['flag','protocol_type','service','num_outbound_cmds']
-x_train.drop(columns=cols, inplace=True)
-x_test.drop(columns=cols, inplace=True)
-
-# this gives us the sparse matrix cats_train, 84 cols.
-#
-# we use TruncSVD to reduce this into a smaller dense matrix that we join back to x_train.
-# if this cannot be done, we just extract cols 74, 8-10,2,33,34,58,13 from the sparse
-# and join to x_train. These are the cols shown by the decision tree with highest
-# importance towards finding the rare classes r2l and u2r.
-
-# Ady's work
-from sklearn.decomposition import TruncatedSVD
-tSVD = TruncatedSVD(n_components=10, random_state = 4129)
-catsvd_train = tSVD.fit_transform(cats_train)
-catsvd_test = tSVD.transform(cats_test)
 
 #   FEATURE SCALING
 # we need to minmaxscale x_train to [0,1].
@@ -67,9 +35,10 @@ mms.transform(x_test)
 cols = [2,8,9,10,13,33,34,58,74]
 x_train = np.hstack([x_train, catsvd_train, cats_train[:, cols].toarray()])
 x_test = np.hstack([x_test, catsvd_test, cats_test[:, cols].toarray()])
+del cats_train, cats_test, catsvd_train, catsvd_test
 
 # at this point, x_train/x_test are ready for resampling/modelling
-save_object([x_train, x_test], 'ready.dat')
+save_object([x_train, x_test, y_train, y_test], 'ready.dat')
 
 ######################################################################
 

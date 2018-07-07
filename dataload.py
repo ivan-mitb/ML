@@ -64,16 +64,56 @@ def cat2ord(x_train, x_test, cols=['protocol_type','service','flag']):
         # x_train[i] = d[x_train[i]].reset_index(drop=True)
         # x_test[i] = d[x_test[i]].reset_index(drop=True)
 
-from sklearn.model_selection import train_test_split
-
+# generates train.dat, test.dat, cats.dat
 def make_data():
     df = init_dataset()
 
     # the processed dataset is now in DataFrame 'df'.
     # we first split it into train/test, before doing any analysis
 
+    from sklearn.model_selection import train_test_split
     x_train, x_test, y_train, y_test = train_test_split(df.iloc[:, :-2], df.iloc[:, -2:], test_size=0.1, stratify=df.attack_type, random_state=4129)
+    del df
 
+    # convert categoricals to ordinal (in-place)
+    cat2ord(x_train, x_test)
+
+    # dummy-encode the 3 categoricals, place into cats_test/cats_test
+    from sklearn.preprocessing import OneHotEncoder
+    hot = OneHotEncoder(sparse=True)
+    cats_train = hot.fit_transform(x_train.loc[:, ['flag','protocol_type','service']])
+    cats_test = hot.transform(x_test.loc[:, ['flag','protocol_type','service']])
+
+    # throw away the 3 categorical cols and 'num_outbound_cmds'
+    cols = ['flag','protocol_type','service','num_outbound_cmds']
+    x_train.drop(columns=cols, inplace=True)
+    x_test.drop(columns=cols, inplace=True)
+
+    # this gives us the sparse matrix cats_train, 84 cols.
+    #
+    # we use TruncSVD to reduce this into a smaller dense matrix that we join back to x_train.
+    # if this cannot be done, we just extract cols 74, 8-10,2,33,34,58,13 from the sparse
+    # and join to x_train. These are the cols shown by the decision tree with highest
+    # importance towards finding the rare classes r2l and u2r.
+
+    # Ady's work
+    from sklearn.decomposition import TruncatedSVD
+    tSVD = TruncatedSVD(n_components=10, random_state = 4129)
+    catsvd_train = tSVD.fit_transform(cats_train)
+    catsvd_test = tSVD.transform(cats_test)
+
+    # convert y.attack/attack_type to numeric
+    from sklearn.preprocessing import LabelEncoder
+    le = LabelEncoder()
+    y_train.attack = le.fit_transform(y_train.attack)
+    y_test.attack = le.transform(y_test.attack)
+    y_train.attack_type = le.fit_transform(y_train.attack_type)
+    y_test.attack_type = le.transform(y_test.attack_type)
+    # convert to np.array
+    y_train = y_train.values
+    y_test = y_test.values
+
+    save_object([cats_train, cats_test, catsvd_train, catsvd_test], 'cats.dat')
     save_object([x_train, y_train], 'train.dat')
     save_object([x_test, y_test], 'test.dat')
 
