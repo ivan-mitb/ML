@@ -102,17 +102,6 @@ def make_data():
     catsvd_train = tSVD.fit_transform(cats_train)
     catsvd_test = tSVD.transform(cats_test)
 
-    # convert y.attack/attack_type to numeric
-    from sklearn.preprocessing import LabelEncoder
-    le = LabelEncoder()
-    y_train.attack = le.fit_transform(y_train.attack)
-    y_test.attack = le.transform(y_test.attack)
-    y_train.attack_type = le.fit_transform(y_train.attack_type)
-    y_test.attack_type = le.transform(y_test.attack_type)
-    # convert to np.array
-    y_train = y_train.values
-    y_test = y_test.values
-
     save_object([cats_train, cats_test, catsvd_train, catsvd_test], 'cats.dat')
     save_object([x_train, y_train], 'train.dat')
     save_object([x_test, y_test], 'test.dat')

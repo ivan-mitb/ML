@@ -5,7 +5,7 @@ from dataload import *
 x_train, y_train = load_object('train.dat')
 x_test, y_test = load_object('test.dat')
 cats_train, cats_test, catsvd_train, catsvd_test = load_object('cats.dat')
-# x_train, x_test = load_object('ready.dat')
+# x_train, x_test, y_train, y_test = load_object('ready.dat')
 
 ###########################################################
 #   skip these if you're loading from .dat files
