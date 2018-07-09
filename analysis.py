@@ -41,26 +41,28 @@ del cats_train, cats_test, catsvd_train, catsvd_test
 save_object([x_train, x_test, y_train, y_test], 'ready.dat')
 
 ######################################################################
-
-# from collections import Counter
-# Counter(y_train.attack[:120])
-# Counter(y_train.attack_type[:1000])
-# Counter(y_train.attack)
-# Counter(y_train.attack_type)
-
 #   RESAMPLING
+
 # resampling is done immediately prior to model-fitting
+
+from sampler import make_pipe
 
 # make a sampling pipeline on the full training set (target = attack)
 # samp_pipe = make_pipe(19999, levels=['smurf', 'neptune', 'normal'])
 # x_train_r, y_train_r = samp_pipe.fit_sample(x_train, y_train.attack)
 
 # make a sampling pipeline on the full training set (target = attack_type)
-samp_pipe = make_pipe(19999, levels=['dos', 'normal', 'probe'])
+samp_pipe = make_pipe(29999, levels=['dos', 'normal', 'probe'])
 x_train_r, y_train_r = samp_pipe.fit_sample(x_train, y_train.attack_type)
 
 # x_train_r, y_train_r now contain the training set with balanced classes.
 # use them for modelling.
+
+######################################################################
+#   MODELLING
+
+# run the code interactively in models.py
+
 
 
 ######################################################################
@@ -72,6 +74,29 @@ def cats_importance(cats_train, target):
     dt.fit(cats_train, y_train.attack_type == target)
     return pd.DataFrame(dt.feature_importances_, columns=['imp']).sort_values(by='imp', axis=0, ascending=False).iloc[:20]
 # [cats_importance(cats_train, i) for i in ['normal','dos','probe','r2l','u2r']]
+
+# the key question here is: are there features which are highly correlated with the rare classes?
+# we should use such features directly in the classifiers -- don't pass them thru PCA.
+
+'''
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from collections import Counter
+
+dt = DecisionTreeClassifier(max_depth=10, random_state=4129)
+%time dt.fit(x_train, y_train.attack_type)
+%time dt.fit(x_train, y_train.attack_type == 'normal')    # fit on rare class r2l, u2r
+pd.DataFrame(dt.feature_importances_, index=x_train.columns, columns=['imp']).sort_values(by='imp', axis=0, ascending=False).iloc[:16]
+
+
+# GridSearch for params
+parameters = [
+    {'criterion': ['gini','entropy'], 'splitter': ['best','random'],
+    'max_depth' : range(10,25)}]
+cv = StratifiedKFold(3, shuffle=True, random_state=4129)
+gs = GridSearchCV(dt, parameters, n_jobs=-1, cv=cv, return_train_score=True)
+%time gs.fit(x_train, y_train)
+'''
 
 ######################################################################
 
