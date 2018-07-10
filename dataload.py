@@ -64,8 +64,9 @@ def cat2ord(x_train, x_test, cols=['protocol_type','service','flag']):
         # x_train[i] = d[x_train[i]].reset_index(drop=True)
         # x_test[i] = d[x_test[i]].reset_index(drop=True)
 
-# generates train.dat, test.dat, cats.dat
-def make_data():
+# if save_intermediates is True: generates train.dat, test.dat, cats.dat
+# generates READY.DAT at the end
+def make_data(save_intermediates=False):
     df = init_dataset()
 
     # the processed dataset is now in DataFrame 'df'.
@@ -102,11 +103,47 @@ def make_data():
     catsvd_train = tSVD.fit_transform(cats_train)
     catsvd_test = tSVD.transform(cats_test)
 
-    save_object([cats_train, cats_test, catsvd_train, catsvd_test], 'cats.dat')
-    save_object([x_train, y_train], 'train.dat')
-    save_object([x_test, y_test], 'test.dat')
+    if save_intermediates:
+        save_object([cats_train, cats_test, catsvd_train, catsvd_test], 'cats.dat')
+        save_object([x_train, y_train], 'train.dat')
+        save_object([x_test, y_test], 'test.dat')
 
-def load_train(fn='train.dat'):
-    return load_object(fn)
+    #   FEATURE SCALING
+    # we need to minmaxscale x_train to [0,1].
 
-# the dataset is now ready, in DataFrames x_train and x_test
+    from sklearn.preprocessing import MinMaxScaler
+
+    mms = MinMaxScaler(copy=False)      # do it in-place
+    x_train = mms.fit_transform(x_train)
+    x_test = mms.transform(x_test)
+    # catsvd_train/test these don't need scaling, they are binary dummy vars
+
+    # join catsvd_train/test as well as the 9 important raw cols of cats_train/test
+    # to x_train/test
+    # this also converts x_train/test into np.array format (ie we lose column names)
+    # now all columns are numeric.
+
+    cols = [2,8,9,10,13,33,34,58,74]
+    x_train = np.hstack([x_train, catsvd_train, cats_train[:, cols].toarray()])
+    x_test = np.hstack([x_test, catsvd_test, cats_test[:, cols].toarray()])
+    del cats_train, cats_test, catsvd_train, catsvd_test
+
+    # READY.DAT - 56 cols
+    # 56 cols: x_train cols 0-36, catsvd_train cols 37-46, cats_train cols 47-55
+    save_object([x_train, x_test, y_train, y_test], 'ready.dat')
+
+
+# returns 5 princomps + 11 best cols of x_train/x_test
+# generates REDUCE.DAT
+def make_reduce(x_train, x_test, y_train, y_test):
+    col_list = [0, 1, 2, 6, 10, 14, 17, 18, 27, 30, 31]
+    ## Get top 5 PCA components
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components = 5, random_state = 4129)
+    pca_result = pca.fit_transform(x_train)
+    # join the 5 princomps with the 11 best columns
+    x_train = np.hstack((pca_result, x_train[:, col_list]))
+    x_test = np.hstack((pca.transform(x_test), x_test[:, col_list]))
+    # make REDUCE.DAT
+    save_object([x_train_reduce, x_test_reduce, y_train, y_test], 'reduce.dat')
+    
