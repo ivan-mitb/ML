@@ -2,15 +2,14 @@
 # http://contrib.scikit-learn.org/imbalanced-learn/stable/over_sampling.html
 # install: conda install -c conda-forge imbalanced-learn
 
-from dataload import *
-
-######################################################################
-#   R E S A M P L I N G
-
 from collections import Counter
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler #, SMOTE, ADASYN
 # from imblearn.combine import SMOTEENN, SMOTETomek
+
+from dataload import load_object, save_object
+# x_train, y_train = load_object('train.dat')
+# x_test, y_test = load_object('test.dat')
 
 # ? it only takes numeric features ?
 # categoricals have to be transformed using one-hot encoding
@@ -35,3 +34,19 @@ def make_pipe(kcount=100000, levels=['smurf', 'neptune', 'normal']):
 
     from imblearn.pipeline import Pipeline
     return Pipeline([('under',rus), ('over',ros)])
+
+# Counter(y_train.attack[:120])
+# Counter(y_train.attack_type[:1000])
+# Counter(y_train.attack)
+# Counter(y_train.attack_type)
+
+# make a sampling pipeline on the full training set (target = attack)
+samp_pipe = make_pipe(20000, levels=['smurf', 'neptune', 'normal'])
+x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 4:], y_train.attack)
+
+# make a sampling pipeline on the full training set (target = attack_type)
+samp_pipe = make_pipe(20000, levels=['dos', 'normal', 'probe'])
+x_train_r, y_train_r = samp_pipe.fit_sample(x_train.iloc[:, 4:], y_train.attack_type)
+
+# x_train_r, y_train_r now contain the training set with balanced classes.
+# use them for modelling.
