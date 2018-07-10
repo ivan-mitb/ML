@@ -140,9 +140,9 @@ def make_reduce(x_train, x_test, y_train, y_test):
     ## Get top 5 PCA components
     from sklearn.decomposition import PCA
     pca = PCA(n_components = 5, random_state = 4129)
-    pca_result = pca.fit_transform(x_train)
+    pca_result = pca.fit_transform(x_train[:, :37])
     # join the 5 princomps with the 11 best columns
     x_train = np.hstack((pca_result, x_train[:, col_list], x_train[:, 37:]))
-    x_test = np.hstack((pca.transform(x_test), x_test[:, col_list], x_test[:, 37:]))
+    x_test = np.hstack((pca.transform(x_test[:, :37]), x_test[:, col_list], x_test[:, 37:]))
     # make REDUCE.DAT
     save_object([x_train, x_test, y_train, y_test], 'reduce.dat')
