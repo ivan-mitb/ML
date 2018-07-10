@@ -145,5 +145,4 @@ def make_reduce(x_train, x_test, y_train, y_test):
     x_train = np.hstack((pca_result, x_train[:, col_list]))
     x_test = np.hstack((pca.transform(x_test), x_test[:, col_list]))
     # make REDUCE.DAT
-    save_object([x_train_reduce, x_test_reduce, y_train, y_test], 'reduce.dat')
-    
+    save_object([x_train, x_test, y_train, y_test], 'reduce.dat')
