@@ -96,9 +96,8 @@ def cat2ord(x_train, x_test, x_corr, cols=['protocol_type','service','flag']):
         # x_train[i] = d[x_train[i]].reset_index(drop=True)
         # x_test[i] = d[x_test[i]].reset_index(drop=True)
 
-# if save_intermediates is True: generates train.dat, test.dat, cats.dat
-# generates READY.DAT at the end
-def make_data(save_intermediates=False):
+# generates train.dat, test.dat, cats.dat
+def make_data():
     df = init_dataset()
     df2 = init_corrected()
 
