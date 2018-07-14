@@ -40,6 +40,12 @@ x_train.max(axis=0)
 #        1.2157684 , 1.        , 1.        , 1.        , 1.        ,
 #        1.        , 1.        , 1.        , 1.        , 1.        ])
 
+# CORRECTED.DAT - 56 cols
+# the KDD test set
+x_corr, y_corr = load_object('corrected.dat')
+x_corr.shape, y_corr.shape
+x_corr.max(axis=0)
+
 ######################################################################
 #   RESAMPLING
 
