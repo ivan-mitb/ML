@@ -75,7 +75,9 @@ def init_corrected(filename='corrected'):
     df['attack_type'] = attack_types.loc[df.attack].attack_type.values
 
     # unknown attack_types are NaN; 18729 rows
-    df.attack_type.value_counts(dropna=False)
+    # df.attack_type.value_counts(dropna=False)
+    # recode as what?
+    # df[df.attack_type.isna()]
 
     return df
 
@@ -97,7 +99,7 @@ def cat2ord(x_train, x_test, x_corr, cols=['protocol_type','service','flag']):
         # x_test[i] = d[x_test[i]].reset_index(drop=True)
 
 # if save_intermediates is True: generates train.dat, test.dat, cats.dat
-# generates READY.DAT at the end
+# generates READY.DAT, CORRECTED.DAT at the end
 def make_data(save_intermediates=False):
     df = init_dataset()
     df2 = init_corrected()
@@ -174,7 +176,7 @@ def make_data(save_intermediates=False):
 
 
 # returns 5 princomps + 11 best cols of x_train/x_test
-# generates REDUCE.DAT
+# generates REDUCE.DAT, CORREDUCE.DAT
 def make_reduce(x_train, x_test, y_train, y_test, x_corr, y_corr):
     col_list = [0, 1, 2, 6, 10, 14, 17, 18, 27, 30, 31]
     ## Get top 5 PCA components
@@ -187,4 +189,4 @@ def make_reduce(x_train, x_test, y_train, y_test, x_corr, y_corr):
     x_corr = np.hstack((pca.transform(x_corr[:, :37]), x_corr[:, col_list], x_corr[:, 37:]))
     # make REDUCE.DAT
     save_object([x_train, x_test, y_train, y_test], 'reduce.dat')
-    save_object([x_corr, y_corr], 'corrected.dat')
+    save_object([x_corr, y_corr], 'correduce.dat')
